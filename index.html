@@ -829,7 +829,7 @@ function renderBrokerChips(){
     document.querySelectorAll('.wb').forEach(btn=>btn.addEventListener('click',function(){
       document.querySelectorAll('.wb').forEach(x=>x.classList.remove('active'));
       this.classList.add('active');CW=this.dataset.w;
-      const p=document.querySelector('.nb.active')?.dataset.page;if(p)refreshPage(p);
+      const p=document.querySelector('.nb.active')?.dataset.page;if(p&&typeof refreshPage==='function')refreshPage(p);
     }));
   }
   populateBrokerSelects();
@@ -1209,6 +1209,23 @@ document.getElementById('btn-import').addEventListener('change',function(){const
 document.getElementById('btn-reset').addEventListener('click',function(){if(!confirm('Apagar TODOS os dados permanentemente? Esta acao nao pode ser desfeita.'))return;ST={ops:[],prices:{},snapshots:[],targets:{sp500:25,global:20,ipca:30,selic:10,ouro:5,acoes_br:2,acoes_us:3,btc:5,fii:0,outro:0},notes:{},watchlist:[],rebalHistory:[]};save();renderAll();});
  
 // Navigation
+ 
+function refreshPage(p){
+  if(p==='dash')renderDash();
+  else if(p==='cart')renderCart();
+  else if(p==='rf')renderRF();
+  else if(p==='market'){loadAPIKeys();renderCartPricesTable({});renderAlerts();}
+  else if(p==='rent')renderRent();
+  else if(p==='ops'){populateCF();renderOps();}
+  else if(p==='proventos')renderProventos();
+  else if(p==='ir')renderIR();
+  else if(p==='rebal')renderRebal();
+  else if(p==='sim')renderSim();
+  else if(p==='if')renderIF();
+  else if(p==='report')renderReport();
+  else if(p==='tools')renderTools();
+}
+ 
 document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',function(){
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   this.classList.add('active');document.getElementById('page-'+this.dataset.page).classList.add('active');
@@ -1230,7 +1247,7 @@ document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',functio
 // ============================================================
 // INIT
 // ============================================================
-function renderAll(){renderDash();populateCF();renderOps();renderCart();renderRF();renderRent();renderProventos();renderIR();renderRebal();renderSim();renderIF();renderReport();renderTools();renderCartPricesTable({});renderAlerts();}
+function renderAll(){renderDash();populateCF();renderOps();renderCart();renderRF();renderRent();renderProventos();renderIR();renderRebal();renderSim();renderIF();renderReport();renderTools();try{renderCartPricesTable({});}catch(e){}try{renderAlerts();}catch(e){}});renderAlerts();}
 function init(){
   if(!ST.brokers||!ST.brokers.length)ST.brokers=[...DEFAULT_BROKERS];
   if(!ST.rfItems)ST.rfItems=[];
@@ -1514,4 +1531,3 @@ load();
 </script>
 </body>
 </html>
- 
