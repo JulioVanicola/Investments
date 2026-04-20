@@ -19,10 +19,11 @@
     body { 
         background: var(--bg-main); 
         color: var(--text-main); 
-        padding: 20px; 
+        padding: 20px 20px 80px 20px; /* Added 80px to the bottom */
         line-height: 1.5; 
         display: flex; 
         justify-content: center; 
+        min-height: 100vh;
     }
     
     .app { 
@@ -866,19 +867,32 @@ document.getElementById('btn-csv-template').addEventListener('click',()=>{
   const template='data,tipo,ticker,classe,quantidade,preco,moeda,corretora,observacao\n2026-05-01,buy,WEGE3,acoes_br,100,52.00,BRL,BTG,Aporte maio\n2026-05-01,buy,VOO,sp500,5,500.00,USD,BTG,DCA mensal\n2026-05-01,div,HGLG11,fii,500,0.85,BRL,Nubank,Rendimento maio\n2026-05-10,sell,PETR4,acoes_br,50,48.00,BRL,Itau,Realizacao parcial';
   const b=new Blob([template],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='template-carteira.csv';a.click();});
 
-document.getElementById('btn-export').addEventListener('click',()=>{const b=new Blob([JSON.stringify(ST,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='carteira-'+new Date().toISOString().slice(0,10)+'.json';a.click();});
-document.getElementById('btn-import-trigger').addEventListener('click',()=>document.getElementById('btn-import').click());
-document.getElementById('btn-import').addEventListener('change',function(){const file=this.files[0];if(!file)return;const r=new FileReader();r.onload=async e=>{try{const d=JSON.parse(e.target.result);if(!d.ops)throw 0;ST=Object.assign({ops:[],prices:{},snapshots:[],targets:ST.targets,notes:{},watchlist:[],rebalHistory:[]},d);await sv();showMsg('msg-import-ok','Backup importado!',3000);renderAll();}catch{showMsg('msg-import-err','Arquivo invalido.',3000);}};r.readAsText(file);this.value='';});
-document.getElementById('btn-reset').addEventListener('click',async()=>{if(!confirm('Apagar TUDO?'))return;ST={ops:[],prices:{},snapshots:[],targets:{sp500:25,global:20,ipca:30,selic:10,ouro:5,acoes_br:2,acoes_us:3,btc:5,fii:0,outro:0},notes:{},watchlist:[],rebalHistory:[]};await sv();renderAll();});
+document.querySelectorAll('.nb').forEach(button => {
+    button.addEventListener('click', () => {
+        const p = button.dataset.page;
+        
+        // UI Updates
+        document.querySelectorAll('.nb').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        
+        button.classList.add('active');
+        const targetPage = document.getElementById('page-' + p);
+        if (targetPage) targetPage.classList.add('active');
 
-document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');document.getElementById('page-'+b.dataset.page).classList.add('active');
-  const p=b.dataset.page;
-  if(p==='dash')renderDash();else if(p==='ops'){populateCF();renderOps();}else if(p==='cart')renderCart();
-  else if(p==='rent')renderRent();else if(p==='proventos')renderProventos();else if(p==='ir')renderIR();
-  else if(p==='rebal')renderRebal();else if(p==='sim')renderSim();else if(p==='if')renderIF();
-  else if(p==='report')renderReport();else if(p==='tools')renderTools();}));
+        // Render Triggers (Matches your original logic)
+        if (p === 'dash') renderDash();
+        else if (p === 'ops') { populateCF(); renderOps(); }
+        else if (p === 'cart') renderCart();
+        else if (p === 'rent') renderRent();
+        else if (p === 'proventos') renderProventos();
+        else if (p === 'ir') renderIR();
+        else if (p === 'rebal') renderRebal();
+        else if (p === 'sim') renderSim();
+        else if (p === 'if') renderIF();
+        else if (p === 'report') renderReport();
+        else if (p === 'tools') renderTools();
+    });
+});
 
 document.querySelectorAll('.wb').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.wb').forEach(x=>x.classList.remove('active'));b.classList.add('active');CW=b.dataset.w;
@@ -889,9 +903,23 @@ document.querySelectorAll('.wb').forEach(b=>b.addEventListener('click',()=>{
 
 document.querySelectorAll('.stab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.stab').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('s-rate').value=t.dataset.r;renderSim();}));
 document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('active'));t.classList.add('active');selPeriod=t.dataset.p;renderRent();}));
-['s-cap','s-ap','s-rate','s-yr','goal-val','goal-yr'].forEach(id=>document.getElementById(id).addEventListener('input',renderSim));
-['f-tipo','f-classe','f-ticker'].forEach(id=>document.getElementById(id).addEventListener('input',renderOps));
-['prov-ticker','prov-year'].forEach(id=>document.getElementById(id).addEventListener('input',renderProventos));
+
+['s-cap','s-ap','s-rate','s-yr','goal-val','goal-yr'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', renderSim);
+});
+
+// Operations Filters
+['f-tipo','f-classe'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', renderOps);
+});
+
+// Dividend Filters
+['prov-ticker','prov-year'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', renderProventos);
+});
 
 function renderAll(){renderDash();populateCF();renderOps();renderCart();renderRent();renderProventos();renderIR();renderRebal();renderSim();renderIF();renderReport();renderTools();}
 function init(){document.getElementById('op-data').value=new Date().toISOString().slice(0,10);document.getElementById('rep-month').value=new Date().toISOString().slice(0,7);populateCF();setupCSV();renderAll();}
