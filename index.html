@@ -735,8 +735,8 @@ input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px var(--accent-
   <div class="api-config-card">
     <div class="card-title" style="color:#64b5f6">configuracao das APIs</div>
     <div class="fg" style="margin-bottom:12px">
-      <div class="fl"><label>brapi.dev token <span style="color:var(--text3);font-weight:300">(BR + FIIs — principal)</span></label><input type="text" id="brapi-key" placeholder="Cole seu token aqui" autocomplete="off"><div class="api-status" id="brapi-status" style="margin-top:4px"><span class="api-dot idle"></span>nao configurada — <a href="https://brapi.dev" target="_blank" style="color:#64b5f6;font-size:10px">brapi.dev</a></div></div>
-      <div class="fl"><label>HG Brasil key <span style="color:var(--text3);font-weight:300">(fallback BR — tickers nao cobertos pela brapi)</span></label><input type="text" id="hg-key" placeholder="Cole sua chave aqui" autocomplete="off"><div class="api-status" id="hg-status" style="margin-top:4px"><span class="api-dot idle"></span>nao configurada — <a href="https://console.hgbrasil.com" target="_blank" style="color:#64b5f6;font-size:10px">console.hgbrasil.com</a></div></div>
+      <div class="fl"><label>Twelve Data key <span style="color:var(--text3);font-weight:300">(acoes BR + FIIs — CORS liberado, 800 req/dia gratis)</span></label><input type="text" id="brapi-key" placeholder="Cole sua chave twelvedata.com" autocomplete="off"><div class="api-status" id="brapi-status" style="margin-top:4px"><span class="api-dot idle"></span>nao configurada — <a href="https://twelvedata.com/register" target="_blank" style="color:#64b5f6;font-size:10px">twelvedata.com/register</a></div></div>
+      <div class="fl"><label>HG Brasil key <span style="color:var(--text3);font-weight:300">(opcional — fallback para tickers sem CORS)</span></label><input type="text" id="hg-key" placeholder="Cole sua chave aqui (opcional)" autocomplete="off"><div class="api-status" id="hg-status" style="margin-top:4px"><span class="api-dot idle"></span>nao configurada — <a href="https://console.hgbrasil.com" target="_blank" style="color:#64b5f6;font-size:10px">console.hgbrasil.com</a></div></div>
     </div>
     <div class="fg" style="margin-bottom:12px">
       <div class="fl"><label>Finnhub key <span style="color:var(--text3);font-weight:300">(acoes US — 60 req/min gratis)</span></label><input type="text" id="av-key" placeholder="Cole sua chave Finnhub aqui" autocomplete="off"><div class="api-status" id="av-status" style="margin-top:4px"><span class="api-dot idle"></span>nao configurada — <a href="https://finnhub.io/register" target="_blank" style="color:#64b5f6;font-size:10px">finnhub.io/register</a></div></div>
@@ -747,7 +747,7 @@ input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px var(--accent-
       <button class="btn" id="btn-refresh-all">Atualizar carteira<span id="refresh-spinner" style="display:none" class="loading-spinner"></span></button>
       <div class="mok" id="msg-keys-ok"></div>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--font-mono);line-height:1.8">brapi.dev: <a href="https://brapi.dev" target="_blank" style="color:#64b5f6">brapi.dev</a> &nbsp;·&nbsp; HG Brasil (fallback BR): <a href="https://console.hgbrasil.com" target="_blank" style="color:#64b5f6">console.hgbrasil.com</a> &nbsp;·&nbsp; Finnhub US: <a href="https://finnhub.io/register" target="_blank" style="color:#64b5f6">finnhub.io/register</a></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--font-mono);line-height:1.8">Twelve Data BR+FIIs (800/dia): <a href="https://twelvedata.com/register" target="_blank" style="color:#64b5f6">twelvedata.com/register</a> &nbsp;·&nbsp; Finnhub US (60/min): <a href="https://finnhub.io/register" target="_blank" style="color:#64b5f6">finnhub.io/register</a> &nbsp;·&nbsp; CoinGecko crypto: gratis sem chave</div>
   </div>
   <div class="card">
     <div class="card-title">buscar ativo — precos e fundamentos</div>
@@ -1288,7 +1288,7 @@ function updateAPIStatus(){
   const bs=document.getElementById('brapi-status');
   const hs=document.getElementById('hg-status');
   const as=document.getElementById('av-status');
-  if(bs)bs.innerHTML=brapi?'<span class="api-dot ok"></span>configurada':'<span class="api-dot idle"></span>nao configurada — <a href="https://brapi.dev" target="_blank" style="color:#64b5f6;font-size:10px">brapi.dev</a>';
+  if(bs)bs.innerHTML=brapi?'<span class="api-dot ok"></span>Twelve Data configurada':'<span class="api-dot idle"></span>nao configurada — <a href="https://twelvedata.com/register" target="_blank" style="color:#64b5f6;font-size:10px">twelvedata.com/register</a>';
   if(hs)hs.innerHTML=hg?'<span class="api-dot ok"></span>configurada (fallback ativo)':'<span class="api-dot idle"></span>nao configurada — <a href="https://console.hgbrasil.com" target="_blank" style="color:#64b5f6;font-size:10px">console.hgbrasil.com</a>';
   if(as)as.innerHTML=av?'<span class="api-dot ok"></span>configurada':'<span class="api-dot idle"></span>nao configurada — <a href="https://finnhub.io/register" target="_blank" style="color:#64b5f6;font-size:10px">finnhub.io/register</a>';
 }
@@ -1302,42 +1302,60 @@ function detectType(t){
   return'br';
 }
 
-async function fetchHG(ticker){
-  const{hg}=getKeys();if(!hg)throw new Error('HG Brasil nao configurado');
-  const r=await fetch(`https://api.hgbrasil.com/finance/stock_price?key=${hg}&symbol=${ticker}`);
-  if(!r.ok)throw new Error('HG Brasil: erro na requisicao');
+async function fetchTD(ticker){
+  const{brapi}=getKeys();
+  if(!brapi)throw new Error('Configure a chave Twelve Data (twelvedata.com/register — gratis 800 req/dia)');
+  // Twelve Data: BR stocks use TICKER:BOVESPA format
+  const sym=ticker.toUpperCase();
+  const symbol=sym.endsWith('.SA')?sym:sym+':BOVESPA';
+  const url=`https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${brapi}`;
+  const r=await fetch(url);
+  if(!r.ok)throw new Error('Twelve Data: erro na requisicao ('+r.status+')');
   const d=await r.json();
-  if(!d.results||d.results[ticker]?.error)throw new Error('Ticker nao encontrado no HG Brasil');
-  const s=d.results[ticker];
-  return{
-    symbol:ticker,longName:s.name||ticker,shortName:s.name||ticker,
-    regularMarketPrice:s.price||0,
-    regularMarketPreviousClose:(s.price||0)-(s.change_price||0),
-    regularMarketChangePercent:s.change_percent||0,
-    regularMarketVolume:s.volume||0,
-    priceToBook:s.financials?.price_to_book_ratio||null,
-    dividendYield:s.financials?.dividends?.yield_12m||null,
-    marketCap:s.market_cap?(s.market_cap*1e6):null,
-    sector:s.sector||null,_source:'HG Brasil',
-  };
+  if(d.status==='error')throw new Error('Twelve Data: '+d.message);
+  if(!d.close&&!d.price)throw new Error(`Ticker ${ticker} nao encontrado. Tente o formato TICKER:BOVESPA`);
+  return d;
+}
+
+function fmtTD(d,ticker){
+  const p=parseFloat(d.close||d.price)||0;
+  const prev=parseFloat(d.previous_close||d.close)||p;
+  const chg=p-prev,pct=prev>0?(chg/prev*100):0;
+  return buildResult(
+    d.symbol||ticker, d.name||ticker, p, 'BRL', chg, pct,
+    {
+      'P/E':d.pe_ratio||'—','EPS':d.eps?'R$'+parseFloat(d.eps).toFixed(2):'—',
+      '52W Max':d['52_week']?.high?'R$'+parseFloat(d['52_week'].high).toFixed(2):'—',
+      '52W Min':d['52_week']?.low?'R$'+parseFloat(d['52_week'].low).toFixed(2):'—',
+      'Volume':d.volume?parseInt(d.volume).toLocaleString('pt-BR'):'—',
+      'Variacao dia':pct.toFixed(2)+'%',
+      'Abertura':d.open?'R$'+parseFloat(d.open).toFixed(2):'—',
+      'Fechamento ant.':d.previous_close?'R$'+parseFloat(d.previous_close).toFixed(2):'—',
+    },
+    'Twelve Data'
+  );
 }
 
 async function fetchBrapi(ticker){
-  const{brapi,hg}=getKeys();
-  if(brapi){
-    try{
-      const r=await fetch(`https://brapi.dev/api/quote/${ticker}?modules=summaryProfile,financialData,defaultKeyStatistics,defaultKeyStatistics`,{headers:{Authorization:`Bearer ${brapi}`}});
-      if(r.ok){
-        const d=await r.json();
-        if(d.results&&d.results[0]&&!d.results[0].error&&d.results[0].regularMarketPrice){
-          d.results[0]._source='brapi.dev';return d.results[0];
-        }
-      }
-    }catch(e){console.warn('brapi falhou para '+ticker+':',e.message,'— tentando HG Brasil...');}
-  }
-  if(hg){console.info('Usando HG Brasil fallback para',ticker);return fetchHG(ticker);}
-  if(!brapi&&!hg)throw new Error('Configure ao menos uma API BR: brapi.dev ou HG Brasil (console.hgbrasil.com)');
-  throw new Error(`Ticker ${ticker} nao encontrado. Se for FII ou BDR, verifique se o token da brapi tem acesso a este ativo (alguns requerem plano pago).`);
+  // fetchBrapi is now an alias for fetchTD (Twelve Data) for BR assets
+  return fetchTD(ticker);
+}
+
+function fmtBrapi(d,ticker){
+  // If data came from Twelve Data, route to fmtTD
+  if(d.close!==undefined||d.price!==undefined)return fmtTD(d,ticker);
+  // Legacy brapi format fallback
+  const p=d.regularMarketPrice||0,prev=d.regularMarketPreviousClose||p;
+  const chg=p-prev,pct=prev>0?(chg/prev*100):0;
+  return buildResult(ticker,d.longName||d.shortName||ticker,p,'BRL',chg,pct,{
+    'P/L':d.priceEarnings?.toFixed(2)||'—','P/VP':d.priceToBook?.toFixed(2)||'—',
+    'Div.Yield':d.dividendYield?d.dividendYield.toFixed(2)+'%':'—',
+    'ROE':d.returnOnEquity?(d.returnOnEquity*100).toFixed(1)+'%':'—',
+    'Mkt Cap':d.marketCap?fmt(d.marketCap):'—',
+    '52W Max':d.fiftyTwoWeekHigh?'R$'+d.fiftyTwoWeekHigh.toFixed(2):'—',
+    '52W Min':d.fiftyTwoWeekLow?'R$'+d.fiftyTwoWeekLow.toFixed(2):'—',
+    'Beta':d.beta?.toFixed(2)||'—','Setor':d.sector||d.industry||'—',
+  },d._source||'Twelve Data');
 }
 
 async function fetchAV(ticker){
@@ -1450,7 +1468,7 @@ async function searchTicker(){
   el.innerHTML='<div style="color:var(--text3);font-family:var(--font-mono);font-size:12px;padding:16px 0">buscando '+ticker+'...<span class="loading-spinner"></span></div>';
   try{
     let res;
-    if(type==='br'){res=fmtBrapi(await fetchBrapi(ticker),ticker);}
+    if(type==='br'){const tdData=await fetchTD(ticker);res=fmtTD(tdData,ticker);}
     else if(type==='us'){res=fmtAV(await fetchAV(ticker),ticker);}
     else{res=fmtCG(await fetchCG(ticker),ticker);}
     renderResult(res);
@@ -1469,48 +1487,17 @@ async function refreshAllPrices(){
     else if(t==='crypto')cgT.push(p.ticker);
   });
   const upd={};
+  // Twelve Data: fetch BR tickers one by one (free plan = 8 req/min)
   if(brT.length&&brapi){
-    try{
-      const r=await fetch('https://brapi.dev/api/quote/'+brT.join(',')+'?modules=summaryProfile',{headers:{Authorization:'Bearer '+brapi}});
-      const d=await r.json();
-      const found=new Set();
-      (d.results||[]).forEach(item=>{
-        if(item.error||!item.regularMarketPrice)return;
-        const k=ps.find(p=>p.ticker===item.symbol);
-        if(k){upd[k.ticker+'|'+k.classe]=item.regularMarketPrice;found.add(item.symbol);}
-      });
-      // Fallback to HG Brasil for tickers not found in brapi
-      const missing=brT.filter(t=>!found.has(t));
-      if(missing.length&&hg){
-        for(const t of missing){
-          try{
-            const hgD=await fetchHG(t);
-            const k=ps.find(p=>p.ticker===t);
-            if(k&&hgD.regularMarketPrice)upd[t+'|'+k.classe]=hgD.regularMarketPrice;
-          }catch(e){console.warn('HG fallback failed for',t,e);}
-        }
-      }
-    }catch(e){
-      // Full brapi batch failed — try HG for all BR tickers
-      console.warn('brapi batch failed, falling back to HG Brasil',e);
-      if(hg){
-        for(const t of brT.slice(0,10)){
-          try{
-            const hgD=await fetchHG(t);
-            const k=ps.find(p=>p.ticker===t);
-            if(k&&hgD.regularMarketPrice)upd[t+'|'+k.classe]=hgD.regularMarketPrice;
-          }catch(e2){console.warn('HG fallback',t,e2);}
-        }
-      }
-    }
-  } else if(brT.length&&hg){
-    // No brapi key, use HG Brasil directly
-    for(const t of brT.slice(0,10)){
+    for(const t of brT.slice(0,8)){
       try{
-        const hgD=await fetchHG(t);
-        const k=ps.find(p=>p.ticker===t);
-        if(k&&hgD.regularMarketPrice)upd[t+'|'+k.classe]=hgD.regularMarketPrice;
-      }catch(e){console.warn('HG direct',t,e);}
+        const d=await fetchTD(t);
+        const price=parseFloat(d.close||d.price)||0;
+        const k=ps.find(p2=>p2.ticker===t);
+        if(k&&price>0)upd[t+'|'+k.classe]=price;
+        // Small delay to respect 8 req/min limit
+        await new Promise(r=>setTimeout(r,500));
+      }catch(e){console.warn('Twelve Data failed for',t,e.message);}
     }
   }
   for(const t of usT.slice(0,10)){
