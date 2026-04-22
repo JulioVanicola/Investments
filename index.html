@@ -1326,18 +1326,18 @@ async function fetchBrapi(ticker){
   const{brapi,hg}=getKeys();
   if(brapi){
     try{
-      const r=await fetch(`https://brapi.dev/api/quote/${ticker}?token=${brapi}&modules=summaryProfile,financialData,defaultKeyStatistics`);
+      const r=await fetch(`https://brapi.dev/api/quote/${ticker}?modules=summaryProfile,financialData,defaultKeyStatistics,defaultKeyStatistics`,{headers:{Authorization:`Bearer ${brapi}`}});
       if(r.ok){
         const d=await r.json();
-        if(d.results&&d.results[0]&&!d.results[0].error){
+        if(d.results&&d.results[0]&&!d.results[0].error&&d.results[0].regularMarketPrice){
           d.results[0]._source='brapi.dev';return d.results[0];
         }
       }
-    }catch(e){console.warn('brapi falhou, tentando HG Brasil...',e);}
+    }catch(e){console.warn('brapi falhou para '+ticker+':',e.message,'— tentando HG Brasil...');}
   }
   if(hg){console.info('Usando HG Brasil fallback para',ticker);return fetchHG(ticker);}
   if(!brapi&&!hg)throw new Error('Configure ao menos uma API BR: brapi.dev ou HG Brasil (console.hgbrasil.com)');
-  throw new Error(`Ticker ${ticker} nao encontrado. Verifique se e um ativo B3 valido.`);
+  throw new Error(`Ticker ${ticker} nao encontrado. Se for FII ou BDR, verifique se o token da brapi tem acesso a este ativo (alguns requerem plano pago).`);
 }
 
 async function fetchAV(ticker){
@@ -1471,7 +1471,7 @@ async function refreshAllPrices(){
   const upd={};
   if(brT.length&&brapi){
     try{
-      const r=await fetch('https://brapi.dev/api/quote/'+brT.join(',')+'?token='+brapi);
+      const r=await fetch('https://brapi.dev/api/quote/'+brT.join(',')+'?modules=summaryProfile',{headers:{Authorization:'Bearer '+brapi}});
       const d=await r.json();
       const found=new Set();
       (d.results||[]).forEach(item=>{
